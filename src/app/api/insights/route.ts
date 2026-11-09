@@ -26,7 +26,8 @@ export async function POST(request: Request) {
   const suppliedKey = typeof body.apiKey === 'string' ? body.apiKey.trim() : '';
   const apiKey = suppliedKey || process.env.GEMINI_API_KEY;
   if (!apiKey) return Response.json({ error: 'Conecte sua chave do Gemini para gerar esta análise.', needsKey: true }, { status: 503, headers });
-  if (apiKey.length > 256 || (suppliedKey && !/^AIza[\w-]{25,}$/.test(suppliedKey))) return Response.json({ error: 'Confira o formato da chave do Google AI Studio.' }, { status: 400, headers });
+  // AI Studio now issues AQ auth keys as well as legacy AIza standard keys.
+  if (apiKey.length > 512 || (suppliedKey && !/^(?:AIza[\w-]{25,}|AQ\.[\w-]{20,})$/.test(suppliedKey))) return Response.json({ error: 'Confira o formato da chave do Google AI Studio.' }, { status: 400, headers });
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'local';
   const now = Date.now(), previous = requests.get(ip);
   if (previous && previous.reset > now && previous.count >= 6) return Response.json({ error: 'Você já gerou seis análises. Tente novamente em dez minutos.' }, { status: 429, headers });
